@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Подсчёт пули — Преферанс</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Marcellus&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --felt-dark:#062f20;
+    --felt:#0a5c3e;
+    --felt-mid:#0d7a50;
+    --felt-light:#12925f;
+    --gold:#d9b45a;
+    --gold-light:#f2dfa4;
+    --gold-dim:#a9863a;
+    --cream:#f6ecd6;
+    --ink:#0e2118;
+    --card-red:#b8433a;
+    --card-black:#1a1a1a;
+    --panel:#0b4a32;
+    --panel-line: rgba(217,180,90,0.35);
+    --shadow: rgba(0,0,0,0.35);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    font-family:'Manrope', sans-serif;
+    color: var(--cream);
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(255,255,255,0.06), transparent 60%),
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 2px, transparent 2px, transparent 6px),
+      radial-gradient(circle at 20% 10%, var(--felt-light), var(--felt) 40%, var(--felt-dark) 100%);
+    background-attachment: fixed;
+    padding: 28px 16px 60px;
+  }
+  .wrap{max-width:1100px;margin:0 auto;}
+  header{
+    text-align:center;
+    margin-bottom:26px;
+    position:relative;
+  }
+  .suits{
+    letter-spacing:14px;
+    font-size:20px;
+    color: var(--gold);
+    opacity:0.75;
+    margin-bottom:6px;
+  }
+  .suits .red{color:var(--card-red);}
+  h1{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:700;
+    font-size:44px;
+    margin:0;
+    color: var(--gold-light);
+    text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    letter-spacing: 1px;
+  }
+  .subtitle{
+    font-family:'Marcellus', serif;
+    color: rgba(246,236,214,0.75);
+    font-size:15px;
+    margin-top:6px;
+  }
+  .card-panel{
+    background: linear-gradient(180deg, rgba(11,74,50,0.92), rgba(6,47,32,0.92));
+    border: 1px solid var(--panel-line);
+    border-radius:16px;
+    box-shadow: 0 10px 30px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.05);
+    padding:20px 22px;
+    margin-bottom:20px;
+  }
+  .panel-title{
+    font-family:'Cormorant Garamond', serif;
+    font-size:22px;
+    color: var(--gold-light);
+    margin:0 0 14px 0;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .panel-title .ico{color:var(--gold);font-size:18px;}
+
+  /* Setup */
+  .count-select{
+    display:flex;
+    gap:10px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+  }
+  .count-btn{
+    flex:1 1 100px;
+    padding:10px 14px;
+    border-radius:10px;
+    border:1px solid var(--panel-line);
+    background: rgba(0,0,0,0.18);
+    color: var(--cream);
+    font-family:'Manrope', sans-serif;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+    transition: all .15s ease;
+    text-align:center;
+  }
+  .count-btn:hover{ border-color: var(--gold); background: rgba(217,180,90,0.12); }
+  .count-btn.active{
+    background: linear-gradient(180deg, var(--gold-light), var(--gold));
+    color: var(--ink);
+    border-color: var(--gold);
+    box-shadow: 0 4px 14px rgba(217,180,90,0.35);
+  }
+  .name-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+    gap:12px;
+    margin-bottom:16px;
+  }
+  label.field-label{
+    display:block;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color: var(--gold-light);
+    opacity:0.85;
+    margin-bottom:6px;
+    font-weight:700;
+  }
+  input[type="text"], input[type="number"]{
+    width:100%;
+    padding:10px 12px;
+    border-radius:9px;
+    border:1px solid var(--panel-line);
+    background: rgba(0,0,0,0.25);
+    color: var(--cream);
+    font-family:'Manrope', sans-serif;
+    font-size:15px;
+    outline:none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  input[type="text"]:focus, input[type="number"]:focus{
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(217,180,90,0.18);
+  }
+  input[type="number"]{ text-align:center; font-weight:700; }
+  input::placeholder{ color: rgba(246,236,214,0.35); }
+
+  .settings-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:18px;
+    align-items:flex-end;
+  }
+  .settings-item{ min-width:160px; }
+  .checkbox-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding: 10px 0 4px;
+  }
+  .checkbox-row input{ width:18px; height:18px; accent-color: var(--gold); }
+  .checkbox-row label{ font-size:14px; color: var(--cream); cursor:pointer; }
+  .formula-line{
+    margin-top:14px;
+    padding:10px 14px;
+    background: rgba(0,0,0,0.22);
+    border-left: 3px solid var(--gold);
+    border-radius:6px;
+    font-family:'Marcellus', serif;
+    font-size:14px;
+    color: var(--gold-light);
+  }
+  select{
+    width:100%;
+    padding:9px 10px;
+    border-radius:9px;
+    border:1px solid var(--panel-line);
+    background: rgba(0,0,0,0.25);
+    color: var(--cream);
+    font-family:'Manrope', sans-serif;
+    font-size:14px;
+  }
+
+  .btn-row{ display:flex; gap:12px; flex-wrap:wrap; margin-top:6px; }
+  .btn{
+    padding:12px 22px;
+    border-radius:10px;
+    border:none;
+    font-family:'Manrope', sans-serif;
+    font-weight:800;
+    font-size:15px;
+    cursor:pointer;
+    letter-spacing:0.02em;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:active{ transform: translateY(1px); }
+  .btn-primary{
+    background: linear-gradient(180deg, var(--gold-light), var(--gold-dim));
+    color: var(--ink);
+    box-shadow: 0 6px 18px rgba(217,180,90,0.3);
+  }
+  .btn-primary:hover{ box-shadow: 0 8px 22px rgba(217,180,90,0.45); }
+  .btn-ghost{
+    background: rgba(0,0,0,0.2);
+    color: var(--cream);
+    border: 1px solid var(--panel-line);
+  }
+  .btn-ghost:hover{ border-color: var(--gold); }
+
+  /* Player cards */
+  .players-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap:16px;
+  }
+  .player-card{
+    background: linear-gradient(180deg, rgba(0,0,0,0.15), rgba(0,0,0,0.28));
+    border: 1px solid var(--panel-line);
+    border-radius:14px;
+    padding:16px;
+    position:relative;
+    overflow:hidden;
+  }
+  .player-card::before{
+    content:"";
+    position:absolute; top:-40px; right:-40px;
+    width:120px; height:120px;
+    background: radial-gradient(circle, rgba(217,180,90,0.15), transparent 70%);
+  }
+  .player-suit{
+    position:absolute;
+    top:10px; right:14px;
+    font-size:26px;
+    opacity:0.18;
+  }
+  .player-name-input{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:700;
+    font-size:22px;
+    background:transparent;
+    border:none;
+    border-bottom: 1px dashed var(--panel-line);
+    color: var(--gold-light);
+    padding: 2px 2px 6px;
+    width:100%;
+    margin-bottom:12px;
+  }
+  .player-name-input:focus{ outline:none; border-bottom-color: var(--gold); }
+
+  .stat-row{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .vists-section{
+    margin-top:8px;
+    padding-top:10px;
+    border-top: 1px dashed var(--panel-line);
+  }
+  .vist-item{ margin-bottom:8px; }
+  .vist-item label{
+    font-size:12.5px;
+    color: rgba(246,236,214,0.8);
+    display:block;
+    margin-bottom:4px;
+  }
+  .score-box{
+    margin-top:14px;
+    padding:12px;
+    text-align:center;
+    border-radius:10px;
+    background: rgba(217,180,90,0.1);
+    border: 1px solid var(--panel-line);
+  }
+  .score-box .score-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color: var(--gold-light);
+    opacity:0.8;
+  }
+  .score-box .score-value{
+    font-family:'Cormorant Garamond', serif;
+    font-size:30px;
+    font-weight:700;
+    color: var(--gold-light);
+  }
+  .score-value.negative{ color: #e58a80; }
+
+  /* Ranking */
+  .ranking-list{ list-style:none; margin:0; padding:0; }
+  .ranking-list li{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:12px 14px;
+    border-radius:10px;
+    margin-bottom:8px;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid var(--panel-line);
+  }
+  .ranking-list li.place-1{ border-color: var(--gold); background: linear-gradient(90deg, rgba(217,180,90,0.22), rgba(0,0,0,0.15)); }
+  .rank-medal{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:700;
+    font-size:22px;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: rgba(217,180,90,0.15);
+    border: 1px solid var(--panel-line);
+    color: var(--gold-light);
+    flex-shrink:0;
+  }
+  .place-1 .rank-medal{ background: linear-gradient(180deg, var(--gold-light), var(--gold-dim)); color: var(--ink); }
+  .place-2 .rank-medal{ background: linear-gradient(180deg, #d7d7d7, #9a9a9a); color: var(--ink); }
+  .place-3 .rank-medal{ background: linear-gradient(180deg, #c98a56, #8a5a2f); color: var(--ink); }
+  .rank-name{ font-weight:700; font-size:16px; flex:1; }
+  .rank-score{ font-family:'Cormorant Garamond', serif; font-weight:700; font-size:20px; color: var(--gold-light); }
+  .rank-score.negative{ color:#e58a80; }
+
+  .hidden{ display:none !important; }
+  .hint{ font-size:13px; color: rgba(246,236,214,0.6); margin-top:8px; }
+  footer{ text-align:center; margin-top: 30px; font-size:12px; color: rgba(246,236,214,0.4); }
+
+  /* Breakdown */
+  .breakdown-list{ display:flex; flex-direction:column; gap:12px; }
+  .breakdown-card{
+    background: rgba(0,0,0,0.18);
+    border: 1px solid var(--panel-line);
+    border-radius:12px;
+    padding:14px 16px;
+  }
+  .breakdown-card summary{
+    cursor:pointer;
+    list-style:none;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-family:'Cormorant Garamond', serif;
+    font-weight:700;
+    font-size:19px;
+    color: var(--gold-light);
+  }
+  .breakdown-card summary::-webkit-details-marker{ display:none; }
+  .breakdown-card summary .sum-total{ font-size:19px; }
+  .breakdown-card summary .sum-total.negative{ color:#e58a80; }
+  .breakdown-card summary::after{
+    content:"▾";
+    color: var(--gold);
+    font-size:14px;
+    margin-left:8px;
+  }
+  .breakdown-card[open] summary::after{ content:"▴"; }
+  .breakdown-steps{
+    margin-top:12px;
+    padding-top:10px;
+    border-top: 1px dashed var(--panel-line);
+    font-family:'Manrope', sans-serif;
+    font-size:14px;
+  }
+  .breakdown-row{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    padding:5px 0;
+    color: rgba(246,236,214,0.9);
+  }
+  .breakdown-row .b-label{ opacity:0.85; }
+  .breakdown-row .b-value{ font-weight:700; white-space:nowrap; }
+  .breakdown-row .b-value.negative{ color:#e58a80; }
+  .breakdown-row.b-total{
+    margin-top:6px;
+    padding-top:10px;
+    border-top: 1px solid var(--panel-line);
+    font-weight:800;
+    font-size:15px;
+    color: var(--gold-light);
+  }
+  .breakdown-sub{
+    padding-left:14px;
+    font-size:13px;
+    color: rgba(246,236,214,0.7);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="suits">♠ <span class="red">♥</span> ♣ <span class="red">♦</span></div>
+    <h1>Подсчёт пули</h1>
+    <div class="subtitle">Итоговый расчёт результатов преферанса — на двоих, троих или четверых</div>
+  </header>
+
+  <!-- SETTINGS -->
+  <div class="card-panel" id="settingsPanel">
+    <h2 class="panel-title"><span class="ico">⚙</span> Настройки подсчёта</h2>
+    <div class="settings-row">
+      <div class="settings-item">
+        <label class="field-label">Множитель пули</label>
+        <input type="number" id="multiplierInput" value="10" min="1" step="1">
+      </div>
+      <div class="settings-item" style="flex:1 1 260px;">
+        <div class="checkbox-row">
+          <input type="checkbox" id="nedoborCheck">
+          <label for="nedoborCheck">Штрафовать «недобор» пули</label>
+        </div>
+      </div>
+      <div class="settings-item hidden" id="targetWrap">
+        <label class="field-label">Целевая пуля</label>
+        <input type="number" id="targetInput" value="10" min="1" step="1">
+      </div>
+      <div class="settings-item hidden" id="coefWrap">
+        <label class="field-label">Коэффициент недобора</label>
+        <select id="coefInput">
+          <option value="1">×1</option>
+          <option value="2">×2</option>
+        </select>
+      </div>
+    </div>
+    <div class="formula-line" id="formulaLine"></div>
+    <div class="btn-row hidden" id="topActions" style="margin-top:16px;">
+      <button class="btn btn-ghost" id="editPlayersBtnTop">Изменить состав</button>
+      <button class="btn btn-ghost" id="resetBtnTop">Новая пуля</button>
+    </div>
+  </div>
+
+  <!-- SETUP -->
+  <div class="card-panel" id="setupPanel">
+    <h2 class="panel-title"><span class="ico">♤</span> Игроки</h2>
+    <div class="count-select" id="countSelect">
+      <div class="count-btn" data-count="2">Двое</div>
+      <div class="count-btn active" data-count="3">Трое (классика)</div>
+      <div class="count-btn" data-count="4">Четверо</div>
+    </div>
+    <div class="name-grid" id="nameGrid"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="startBtn">Начать подсчёт</button>
+    </div>
+  </div>
+
+  <!-- PLAYERS / RESULTS -->
+  <div id="gameSection" class="hidden">
+    <div class="card-panel">
+      <h2 class="panel-title"><span class="ico">♣</span> Гора, пуля и висты</h2>
+      <div class="players-grid" id="playersGrid"></div>
+    </div>
+
+    <div class="card-panel">
+      <h2 class="panel-title"><span class="ico">♦</span> Итоговый рейтинг</h2>
+      <ul class="ranking-list" id="rankingList"></ul>
+      <div class="hint">Места определяются по итоговому счёту каждого игрока. При равенстве очков места делятся.</div>
+    </div>
+
+    <div class="card-panel">
+      <h2 class="panel-title"><span class="ico">♠</span> Как посчитан результат</h2>
+      <div class="hint" style="margin-top:-4px; margin-bottom:14px;">Разбор по каждому игроку — можно свернуть/развернуть, чтобы сверить с бумажным бланком.</div>
+      <div class="breakdown-list" id="breakdownList"></div>
+    </div>
+  </div>
+
+  <footer>Пуля ведётся на бумажном бланке — здесь только итоговый подсчёт и рейтинг.</footer>
+</div>
+
+<script>
+(function(){
+  const SUITS = ['♠','♥','♦','♣'];
+  let playerCount = 3;
+  let players = []; // {name, gora, pulya, vists: {opponentIndex: value}}
+
+  const countSelect = document.getElementById('countSelect');
+  const nameGrid = document.getElementById('nameGrid');
+  const startBtn = document.getElementById('startBtn');
+  const setupPanel = document.getElementById('setupPanel');
+  const gameSection = document.getElementById('gameSection');
+  const playersGrid = document.getElementById('playersGrid');
+  const rankingList = document.getElementById('rankingList');
+  const breakdownList = document.getElementById('breakdownList');
+  const topActions = document.getElementById('topActions');
+  const editPlayersBtn = document.getElementById('editPlayersBtnTop');
+  const resetBtn = document.getElementById('resetBtnTop');
+
+  const multiplierInput = document.getElementById('multiplierInput');
+  const nedoborCheck = document.getElementById('nedoborCheck');
+  const targetWrap = document.getElementById('targetWrap');
+  const coefWrap = document.getElementById('coefWrap');
+  const targetInput = document.getElementById('targetInput');
+  const coefInput = document.getElementById('coefInput');
+  const formulaLine = document.getElementById('formulaLine');
+
+  function renderNameGrid(){
+    nameGrid.innerHTML = '';
+    for(let i=0;i<playerCount;i++){
+      const div = document.createElement('div');
+      div.innerHTML = `
+        <label class="field-label">Игрок ${i+1}</label>
+        <input type="text" class="setup-name" data-idx="${i}" placeholder="Имя игрока ${i+1}" maxlength="20">
+      `;
+      nameGrid.appendChild(div);
+    }
+  }
+
+  countSelect.querySelectorAll('.count-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      countSelect.querySelectorAll('.count-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      playerCount = parseInt(btn.dataset.count,10);
+      renderNameGrid();
+    });
+  });
+
+  function updateFormulaLine(){
+    const mult = multiplierInput.value || 10;
+    let text = `Итог игрока = Пуля × ${mult} − Гора + сумма вистов против соперников`;
+    if(nedoborCheck.checked){
+      text += `; при недоборе до цели ${targetInput.value} — доп. штраф ×${coefInput.value}`;
+    }
+    formulaLine.textContent = text;
+  }
+
+  nedoborCheck.addEventListener('change', ()=>{
+    targetWrap.classList.toggle('hidden', !nedoborCheck.checked);
+    coefWrap.classList.toggle('hidden', !nedoborCheck.checked);
+    updateFormulaLine();
+    recompute();
+  });
+  [multiplierInput, targetInput, coefInput].forEach(el=>{
+    el.addEventListener('input', ()=>{ updateFormulaLine(); recompute(); });
+  });
+
+  function buildPlayersFromSetup(){
+    const nameInputs = nameGrid.querySelectorAll('.setup-name');
+    players = [];
+    nameInputs.forEach((inp, i)=>{
+      const name = inp.value.trim() || `Игрок ${i+1}`;
+      players.push({ name, gora:0, pulya:0, vists:{} });
+    });
+  }
+
+  function renderPlayerCards(){
+    playersGrid.innerHTML = '';
+    players.forEach((p, idx)=>{
+      const card = document.createElement('div');
+      card.className = 'player-card';
+      card.dataset.idx = idx;
+
+      let vistsHtml = '';
+      players.forEach((opp, oidx)=>{
+        if(oidx === idx) return;
+        vistsHtml += `
+          <div class="vist-item">
+            <label>Весты против <span class="opp-name-label" data-opp="${oidx}">${opp.name}</span></label>
+            <input type="number" class="vist-input" data-idx="${idx}" data-opp="${oidx}" placeholder="0" step="1">
+          </div>
+        `;
+      });
+
+      card.innerHTML = `
+        <div class="player-suit">${SUITS[idx % SUITS.length]}</div>
+        <input type="text" class="player-name-input" data-idx="${idx}" value="${p.name}">
+        <div class="stat-row">
+          <div>
+            <label class="field-label">Гора</label>
+            <input type="number" class="gora-input" data-idx="${idx}" placeholder="0" step="1">
+          </div>
+          <div>
+            <label class="field-label">Пуля</label>
+            <input type="number" class="pulya-input" data-idx="${idx}" placeholder="0" step="1">
+          </div>
+        </div>
+        <div class="vists-section">${vistsHtml}</div>
+        <div class="score-box">
+          <div class="score-label">Итог</div>
+          <div class="score-value" id="score-${idx}">0</div>
+        </div>
+      `;
+      playersGrid.appendChild(card);
+    });
+
+    // attach listeners
+    playersGrid.querySelectorAll('.player-name-input').forEach(inp=>{
+      inp.addEventListener('input', (e)=>{
+        const idx = parseInt(e.target.dataset.idx,10);
+        players[idx].name = e.target.value.trim() || `Игрок ${idx+1}`;
+        document.querySelectorAll(`.opp-name-label[data-opp="${idx}"]`).forEach(lbl=>{
+          lbl.textContent = players[idx].name;
+        });
+        recompute();
+      });
+    });
+    playersGrid.querySelectorAll('.gora-input').forEach(inp=>{
+      inp.addEventListener('input', (e)=>{
+        const idx = parseInt(e.target.dataset.idx,10);
+        players[idx].gora = parseFloat(e.target.value) || 0;
+        recompute();
+      });
+    });
+    playersGrid.querySelectorAll('.pulya-input').forEach(inp=>{
+      inp.addEventListener('input', (e)=>{
+        const idx = parseInt(e.target.dataset.idx,10);
+        players[idx].pulya = parseFloat(e.target.value) || 0;
+        recompute();
+      });
+    });
+    playersGrid.querySelectorAll('.vist-input').forEach(inp=>{
+      inp.addEventListener('input', (e)=>{
+        const idx = parseInt(e.target.dataset.idx,10);
+        const opp = parseInt(e.target.dataset.opp,10);
+        players[idx].vists[opp] = parseFloat(e.target.value) || 0;
+        recompute();
+      });
+    });
+  }
+
+  function computeScore(p){
+    const mult = parseFloat(multiplierInput.value) || 0;
+    const pulyaTerm = p.pulya * mult;
+    let score = pulyaTerm - p.gora;
+
+    const vistDetails = [];
+    let vistSum = 0;
+    players.forEach((opp, oidx)=>{
+      if(opp === p) return;
+      const v = p.vists[oidx] || 0;
+      vistDetails.push({ name: opp.name, value: v });
+      vistSum += v;
+    });
+    score += vistSum;
+
+    let nedobor = null;
+    if(nedoborCheck.checked){
+      const target = parseFloat(targetInput.value) || 0;
+      const coef = parseFloat(coefInput.value) || 1;
+      if(p.pulya < target){
+        const shortfall = target - p.pulya;
+        const penalty = shortfall * mult * coef;
+        score -= penalty;
+        nedobor = { target, coef, shortfall, penalty };
+      }
+    }
+
+    return { score, mult, pulya: p.pulya, gora: p.gora, pulyaTerm, vistDetails, vistSum, nedobor };
+  }
+
+  function fmt(n){
+    return n.toLocaleString('ru-RU');
+  }
+
+  function renderBreakdown(order){
+    const openIdx = new Set();
+    breakdownList.querySelectorAll('.breakdown-card[open]').forEach(el=>{
+      openIdx.add(el.dataset.playerIdx);
+    });
+    breakdownList.innerHTML = '';
+    order.forEach(item=>{
+      const d = item.detail;
+      const details = document.createElement('details');
+      details.className = 'breakdown-card';
+      details.dataset.playerIdx = String(item.idx);
+      if(openIdx.has(String(item.idx))) details.open = true;
+
+      const vistRows = d.vistDetails.map(v=>`
+        <div class="breakdown-row breakdown-sub">
+          <span class="b-label">— против ${v.name}</span>
+          <span class="b-value ${v.value<0?'negative':''}">${v.value>=0?'+':''}${fmt(v.value)}</span>
+        </div>
+      `).join('');
+
+      let nedoborRow = '';
+      if(d.nedobor){
+        nedoborRow = `
+          <div class="breakdown-row">
+            <span class="b-label">Штраф за недобор: (${fmt(d.nedobor.target)} − ${fmt(d.pulya)}) × ${fmt(d.mult)} × ${fmt(d.nedobor.coef)}</span>
+            <span class="b-value negative">−${fmt(d.nedobor.penalty)}</span>
+          </div>
+        `;
+      }
+
+      details.innerHTML = `
+        <summary>
+          <span>${item.name}</span>
+          <span class="sum-total ${item.score<0?'negative':''}">${fmt(item.score)}</span>
+        </summary>
+        <div class="breakdown-steps">
+          <div class="breakdown-row">
+            <span class="b-label">Пуля: ${fmt(d.pulya)} × ${fmt(d.mult)}</span>
+            <span class="b-value">${fmt(d.pulyaTerm)}</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="b-label">Гора</span>
+            <span class="b-value negative">−${fmt(d.gora)}</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="b-label">Весты (сумма против всех соперников)</span>
+            <span class="b-value ${d.vistSum<0?'negative':''}">${d.vistSum>=0?'+':''}${fmt(d.vistSum)}</span>
+          </div>
+          ${vistRows}
+          ${nedoborRow}
+          <div class="breakdown-row b-total">
+            <span class="b-label">Итог</span>
+            <span class="b-value ${item.score<0?'negative':''}">${fmt(item.score)}</span>
+          </div>
+        </div>
+      `;
+      breakdownList.appendChild(details);
+    });
+  }
+
+  function recompute(){
+    if(players.length === 0) return;
+    const details = players.map(p=>computeScore(p));
+    details.forEach((d, idx)=>{
+      const el = document.getElementById(`score-${idx}`);
+      if(el){
+        el.textContent = fmt(d.score);
+        el.classList.toggle('negative', d.score < 0);
+      }
+    });
+
+    // ranking with tie handling
+    const order = players.map((p,idx)=>({idx, name:p.name, score:details[idx].score, detail:details[idx]}))
+                          .sort((a,b)=> b.score - a.score);
+    let places = [];
+    let currentPlace = 1;
+    order.forEach((item, i)=>{
+      if(i>0 && item.score === order[i-1].score){
+        places.push(places[i-1]);
+      } else {
+        places.push(currentPlace);
+      }
+      currentPlace = i+2;
+    });
+
+    rankingList.innerHTML = '';
+    order.forEach((item, i)=>{
+      const li = document.createElement('li');
+      li.className = `place-${places[i]}`;
+      const medal = places[i] <= 3 ? ['🥇','🥈','🥉'][places[i]-1] : `${places[i]}`;
+      li.innerHTML = `
+        <div class="rank-medal">${medal}</div>
+        <div class="rank-name">${item.name}</div>
+        <div class="rank-score ${item.score<0?'negative':''}">${fmt(item.score)}</div>
+      `;
+      rankingList.appendChild(li);
+    });
+
+    renderBreakdown(order);
+  }
+
+  startBtn.addEventListener('click', ()=>{
+    buildPlayersFromSetup();
+    renderPlayerCards();
+    recompute();
+    setupPanel.classList.add('hidden');
+    gameSection.classList.remove('hidden');
+    topActions.classList.remove('hidden');
+    gameSection.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+
+  editPlayersBtn.addEventListener('click', ()=>{
+    setupPanel.classList.remove('hidden');
+    setupPanel.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+
+  resetBtn.addEventListener('click', ()=>{
+    if(confirm('Начать новую пулю? Текущие значения будут сброшены.')){
+      players.forEach(p=>{ p.gora=0; p.pulya=0; p.vists={}; });
+      renderPlayerCards();
+      recompute();
+    }
+  });
+
+  renderNameGrid();
+  updateFormulaLine();
+})();
+</script>
+</body>
+</html>
